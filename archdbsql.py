@@ -2,6 +2,7 @@ from .dbconnector.database  import Database
 from .queries               import method
 from .queries               import loop
 from .queries               import enrichment
+from .queries               import taxid
 
 class ArchDBsql(object):
 
@@ -25,6 +26,8 @@ class ArchDBsql(object):
         return loop.count_loops(self._db)
     def get_loop_source_chain_count(self):
         return loop.count_loops_source_pdb(self._db)
+    def get_loop_specie_count(self, taxID):
+        return loop.count_loops_assigned_to_species(self._db, taxID)
 
     # ENRICHMENT ANALYSIS RELATED FUNTIONS
     def get_all_instances_of(self, external, mode):
@@ -34,6 +37,15 @@ class ArchDBsql(object):
         self._check_external_relations(external)
         self._check_cluster_types(cluster)
         return enrichment.get_instances_for(self._db, cluster, external, mode)
+
+    # TAXID RELATED FUNCTIONS
+    def exists_taxid(self, taxID):
+        return True if taxid.get_tax_from_id(self._db, taxID) is not None else False
+
+    def exists_specie(self, taxID):
+        data = taxid.get_tax_from_id(self._db, taxID)
+        if data is None or data[3] != 'species': return False
+        return True
 
     #CHECKERS
     def _check_external_relations(self, relation):

@@ -4,30 +4,49 @@ from . import cluster as klstr
 ''' The GET INSTANCES functions are assumed to be performed in order to build the enrichment tables'''
 def get_all_instances_of(db, external, mode):
     ClusterInstances.external = external.lower()
+    mode                      = mode.split('.')
+    if len(mode) == 1:  taxID = None
+    else:               taxID = int(mode[1])
+    mode                      = mode[0]
     ClusterInstances.mode     = mode.lower()
     ClusterInstances.debug    = db._dbug
 
     if db._dbug: sys.stderr.write('Creating SQL query for {0.external} / {0.mode}\n'.format(ClusterInstances))
 
     db.select('c2u.chain')
-    if external.lower() == 'enzyme': 
+    if external.lower() == 'enzyme':
+        unit = 'ext.enzyme'
         db.select('ext.enzyme')
         db.table('uniprot2enzyme ext')
-        db.join('chain2uniprot c2u','c2u.uniprot = ext.uniprot')
+        db.join('chain2uniprot c2u','c2u.uniprot = ext.uniprot' )
     elif external.lower() == 'go':
+        unit = 'ext.GO'
         db.select('ext.GO')
         db.table('uniprot2GO ext')
-        db.join('chain2uniprot c2u','c2u.uniprot = ext.uniprot')
+        db.join('chain2uniprot c2u','c2u.uniprot = ext.uniprot' )
     elif external.lower() == 'drugbank':
+        unit = 'ext.drugbank_id'
         db.select('ext.drugbank_id')
         db.table('drugBank_target ext')
-        db.join('chain2uniprot c2u','c2u.uniprot = ext.uniprot')
+        db.join('chain2uniprot c2u','c2u.uniprot = ext.uniprot' )
     elif external.lower() == 'scop':
+        unit = 'ext.family'
         db.select('ext.family, ext.superfamily, ext.fold, ext.class')
         db.table('scop ext')
-        db.join('chain2scop c2u','c2u.domain = ext.domain')
-    db.join('loop2chain l2c','l2c.chain=c2u.chain AND l2c.assignation="D" AND l2c.start>=c2u.start AND l2c.end<=c2u.end')
+        db.join('chain2scop c2u',   'c2u.domain = ext.domain'   ) 
+    if taxID is not None: 
+        if external.lower() in ['enzyme', 'go', 'drugbank']:
+            db.join('uniprot2taxid u2t', 'u2t.uniprot = c2u.uniprot AND u2t.taxid = {0}'.format(taxID))
+            db.join('loop2chain l2c','l2c.chain=c2u.chain AND (l2c.assignation="D" OR l2c.assignation="H") AND l2c.start>=c2u.start AND l2c.end<=c2u.end')
+        elif external.lower() == 'scop':
+            db.join('chain2uniprot n2u', 'n2u.chain   = c2u.chain')
+            db.join('uniprot2taxid u2t', 'u2t.uniprot = n2u.uniprot AND u2t.taxid = {0}'.format(taxID))
+            db.join('loop2chain l2c','l2c.chain=c2u.chain AND (l2c.assignation="D" OR l2c.assignation="H") AND l2c.start>=c2u.start AND l2c.end<=c2u.end')
+    else:
+        db.join('loop2chain l2c','l2c.chain=c2u.chain AND l2c.assignation="D" AND l2c.start>=c2u.start AND l2c.end<=c2u.end')
     db.join('loop_description ld','ld.nid=l2c.loop_id')
+    if taxID is not None:
+        db.group_by('ld.nid, u2t.uniprot, {0}'.format(unit))
     db.get()
 
     cluster = ClusterInstances(0, 0)
@@ -43,9 +62,15 @@ def get_all_instances_of(db, external, mode):
 
 def get_instances_for(db, cluster, external, mode):
     ClusterInstances.external = external.lower()
+    mode                      = mode.split('.')
+    if len(mode) == 1:  taxID = None
+    else:               taxID = int(mode[1])
+    mode                      = mode[0]
     ClusterInstances.mode     = mode.lower()
 
-    if   mode == 'regular':     cluster_sizes = klstr.get_cluster_size(db, cluster)
+    if   mode == 'regular':     
+        if taxID is None: cluster_sizes = klstr.get_cluster_size(db, cluster)
+        else:             cluster_sizes = klstr.get_cluster_extended_loop_species_size(db, cluster, taxID)
     elif mode == 'compressed':  cluster_sizes = klstr.get_cluster_loopsource_size(db, cluster)
 
     if   cluster == 'class':    search_param = 'class_nid'
@@ -61,19 +86,33 @@ def get_instances_for(db, cluster, external, mode):
     db.table('cluster_subclass  cs')
     db.join('loop2cluster       l2c',   'l2c.cluster_nid = cs.nid'          )
     db.join('loop2chain         lc',    'lc.loop_id      = l2c.loop_nid'    )
-    if external.lower() == 'enzyme':
+    if external.lower()   == 'enzyme':
+        unit = 'ext.enzyme'
         db.join('chain2uniprot c2u',    'c2u.chain=lc.chain AND lc.start>=c2u.start AND lc.end<=c2u.end')
         db.join('uniprot2enzyme ext',   'ext.uniprot = c2u.uniprot'         )
     elif external.lower() == 'go':
+        unit = 'ext.GO'
         db.join('chain2uniprot c2u',    'c2u.chain=lc.chain AND lc.start>=c2u.start AND lc.end<=c2u.end')
         db.join('uniprot2GO ext',       'ext.uniprot = c2u.uniprot'         )
     elif external.lower() == 'drugbank':
+        unit = 'ext.drugbank_id'
         db.join('chain2uniprot c2u',    'c2u.chain=lc.chain AND lc.start>=c2u.start AND lc.end<=c2u.end')
         db.join('drugBank_target ext',  'ext.uniprot = c2u.uniprot'         )
-    elif external.lower() == 'scop':    
+    elif external.lower() == 'scop':
+        unit = 'ext.family'    
         db.join('chain2scop c2u',       'c2u.chain=lc.chain AND lc.start>=c2u.start AND lc.end<=c2u.end')
-        db.join('scop ext',             'c2u.domain = ext.domain'           )                  
-    db.where('lc.assignation',          'D'                                 )
+        db.join('scop ext',             'c2u.domain = ext.domain'           )
+    if taxID is not None: 
+        if external.lower() in ['enzyme', 'go', 'drugbank']:
+            db.join('uniprot2taxid u2t', 'u2t.uniprot = c2u.uniprot AND u2t.taxid = {0}'.format(taxID))
+        elif external.lower() == 'scop':
+            db.join('chain2uniprot n2u', 'n2u.chain   = lc.chain AND lc.start>=n2u.start AND lc.end<=n2u.end')
+            db.join('uniprot2taxid u2t', 'u2t.uniprot = n2u.uniprot AND u2t.taxid = {0}'.format(taxID))
+        db.where_in('lc.assignation',   ['D','H']                           )
+    else:                  
+        db.where('lc.assignation',      'D'                                 )
+    if taxID is not None:
+        db.group_by('cs.{0}, lc.loop_id, {1}'.format(search_param, unit))
     db.get()
     dataDIC = {}
     if db._dbug: sys.stderr.write('\tAdding Results.\n')
