@@ -6,10 +6,10 @@ import re
 import math
 
 __version__ = "0.1"
-    
+
 class Database:
     """a python mysql query builder in codeIgniter activerecord style"""
-    
+
 
     def __init__(self, dbhost = None, dbuser = None, dbpass = None, dbname = None, dbug = False):
         """Initialize the database connection"""
@@ -50,7 +50,7 @@ class Database:
         self.ar_cache_having        = []
         self.ar_cache_orderby       = []
         self.ar_cache_set           = {}    #changed from [] to {}
-        
+
         self.ar_no_escape           = []
         self.ar_cache_no_escape     = []
 
@@ -159,7 +159,7 @@ class Database:
             pass
             # string = self._conn.escape_string(string)
         else:
-            string = ''.join({'"':'\\"', "'":"\\'", "\0":"\\\0", "\\":"\\\\"}.get(c, c) for c in string) 
+            string = ''.join({'"':'\\"', "'":"\\'", "\0":"\\\0", "\\":"\\\\"}.get(c, c) for c in string)
 
         return string
 
@@ -747,7 +747,7 @@ class Database:
                 self.ar_select.append(val)
                 self.ar_no_escape.append(escape)
 
-                if self.ar_caching == True:
+                if self.ar_caching is True:
                     self.ar_cache_select.append(val)
                     self.ar_cache_exists.append('select')
                     self.ar_cache_no_escape.append(escape)
@@ -1053,7 +1053,7 @@ class Database:
                 if escape == True:
                     k = self._protect_identifiers(k, False, escape)
                     v = ' ' + self.escape(v)
-                
+
                 if not self._has_operator(k):
                     k += ' = '
             else:
@@ -1269,7 +1269,7 @@ class Database:
             prefix = '' if len(self.ar_like) == 0 else type
 
             v = self.escape_like_str(v)
-            
+
             if side == 'none':
                 like_statement = prefix + " {0} {1} LIKE '{2}'".format(k, not_like, v)
             elif side == 'before':
@@ -1403,7 +1403,7 @@ class Database:
 
 
         if ',' in orderby:
-            temp = [] 
+            temp = []
             for part in orderby.split(','):
                 part = part.strip()
                 if part not in self.ar_aliased_tables:
@@ -1855,7 +1855,7 @@ class Database:
 
     #     if not limit is None:
     #         self.limit(limit)
-            
+
     #     sql = self._update(self._protect_identifiers(table, True, None, False), self.ar_set, self.ar_where, self.ar_orderby, self.ar_limit)
 
     #     self._reset_write()
@@ -2239,7 +2239,7 @@ class Database:
 
     #         if len(where) > 0 and len(like) > 0:
     #             conditions += " AND "
-            
+
     #         conditions += "\n".join(like)
 
     #     limit = ' LIMIT '+limit if limit else ''
@@ -2570,7 +2570,7 @@ class Database:
             return False
 
         return self.CACHE.delete_all()
-    
+
 
     # --------------------------------------------------------------------
 
@@ -2669,7 +2669,7 @@ class Database:
         }
 
         self._reset_run(ar_reset_items)
-    
+
 
     # # --------------------------------------------------------------------
 
@@ -2732,7 +2732,7 @@ class Database:
                 self._cursor.close()
                 self._cursor = None
             return data
-    
+
 
     # --------------------------------------------------------------------
 
@@ -2755,7 +2755,7 @@ class Database:
                 self._cursor.close()
                 self._cursor = None
             return data
-    
+
 
     # --------------------------------------------------------------------
 
@@ -2771,7 +2771,7 @@ class Database:
                 self._cursor.close()
                 self._cursor = None
             return data
-    
+
 
     # --------------------------------------------------------------------
 

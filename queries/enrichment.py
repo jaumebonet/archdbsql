@@ -1,6 +1,69 @@
 import sys
 from . import cluster as klstr
 
+def tofloat(value):
+    try:
+        return float(value)
+    except:
+        return 1
+
+def get_enrichment(db, cluster, external, nid):
+    s = ','.join(['enrichment_pvalue', 'frequency', 'logodd',
+                  'mutual_information', 'number_instances'])
+    if external.lower() == 'enzyme':
+        db.select('e.id, e.description, e.level, {0}'.format(s))
+        db.table('enzyme_{0}_enrichment r'.format(cluster))
+        db.join('enzyme e', 'e.id=r.enzyme_id')
+    elif external.lower() == 'go':
+        db.select('g.id, g.name, g.namespace, {0}'.format(s))
+        db.table('go_{0}_enrichment r'.format(cluster))
+        db.join('GO g', 'g.nid=r.GO_nid')
+    elif external.lower() == 'drugbank':
+        ## TODO
+        db.table('drugBank_{0}_enrichment'.format(cluster))
+        ## TODO
+    elif external.lower() == 'scop':
+        ## TODO
+        db.table('scop_{0}_enrichment'.format(cluster))
+        ## TODO
+    if isinstance(nid, list):
+        db.where_in('r.{0}_nid'.format(cluster), nid)
+    else:
+        db.where('r.{0}_nid'.format(cluster), nid)
+    db.get()
+
+    r = {}
+    for row in db.result():
+        r.setdefault(row[0], {'id': row[0], 'name': row[1], 'info': row[2],
+                              'pvalue': tofloat(row[3]), 'MI': tofloat(row[6]),
+                              'logodd': tofloat(row[5]), 'k':  int(row[7]),
+                              'frequency': tofloat(row[4])})
+        if tofloat(row[3]) < r[row[0]]['pvalue']:
+            r[row[0]]['pvalue'] = tofloat(row[3])
+        if tofloat(row[6]) > r[row[0]]['MI']:
+            r[row[0]]['MI'] = tofloat(row[6])
+        if tofloat(row[4]) > r[row[0]]['frequency']:
+            r[row[0]]['frequency'] = tofloat(row[4])
+        if int(row[7]) > r[row[0]]['k']:
+            r[row[0]]['k'] = int(row[7])
+        if tofloat(row[5]) > r[row[0]]['logodd']:
+            r[row[0]]['logodd'] = tofloat(row[5])
+
+    if external.lower() == 'enzyme':
+        for k, v in r.iteritems():
+            if v['info'] == 2:
+                v['name'] = r[enzyme_parent(k)]['name'] + ' ' + v['name']
+        for k, v in r.iteritems():
+            if v['info'] == 3:
+                v['name'] = r[enzyme_parent(k)]['name'] + ' ' + v['name']
+        for k, v in r.iteritems():
+            if v['info'] == 4:
+                v['name'] = r[enzyme_parent(k)]['name'] + ' ' + v['name']
+    data = []
+    for k, v in r.iteritems():
+        data.append(v)
+    return data
+
 ''' The GET INSTANCES functions are assumed to be performed in order to build the enrichment tables'''
 def get_all_instances_of(db, external, mode):
     ClusterInstances.external = external.lower()
@@ -18,23 +81,23 @@ def get_all_instances_of(db, external, mode):
         unit = 'ext.enzyme'
         db.select('ext.enzyme')
         db.table('uniprot2enzyme ext')
-        db.join('chain2uniprot c2u','c2u.uniprot = ext.uniprot' )
+        db.join('chain2uniprot c2u', 'c2u.uniprot = ext.uniprot')
     elif external.lower() == 'go':
         unit = 'ext.GO'
         db.select('ext.GO')
         db.table('uniprot2GO ext')
-        db.join('chain2uniprot c2u','c2u.uniprot = ext.uniprot' )
+        db.join('chain2uniprot c2u', 'c2u.uniprot = ext.uniprot')
     elif external.lower() == 'drugbank':
         unit = 'ext.drugbank_id'
         db.select('ext.drugbank_id')
         db.table('drugBank_target ext')
-        db.join('chain2uniprot c2u','c2u.uniprot = ext.uniprot' )
+        db.join('chain2uniprot c2u', 'c2u.uniprot = ext.uniprot')
     elif external.lower() == 'scop':
         unit = 'ext.family'
         db.select('ext.family, ext.superfamily, ext.fold, ext.class')
         db.table('scop ext')
-        db.join('chain2scop c2u',   'c2u.domain = ext.domain'   ) 
-    if taxID is not None: 
+        db.join('chain2scop c2u', 'c2u.domain = ext.domain')
+    if taxID is not None:
         if external.lower() in ['enzyme', 'go', 'drugbank']:
             db.join('uniprot2taxid u2t', 'u2t.uniprot = c2u.uniprot AND u2t.taxid = {0}'.format(taxID))
             db.join('loop2chain l2c','l2c.chain=c2u.chain AND (l2c.assignation="D" OR l2c.assignation="H") AND l2c.start>=c2u.start AND l2c.end<=c2u.end')
@@ -68,14 +131,14 @@ def get_instances_for(db, cluster, external, mode):
     mode                      = mode[0]
     ClusterInstances.mode     = mode.lower()
 
-    if   mode == 'regular':     
+    if   mode == 'regular':
         if taxID is None: cluster_sizes = klstr.get_cluster_size(db, cluster)
         else:             cluster_sizes = klstr.get_cluster_extended_loop_species_size(db, cluster, taxID)
     elif mode == 'compressed':  cluster_sizes = klstr.get_cluster_loopsource_size(db, cluster)
 
     if   cluster == 'class':    search_param = 'class_nid'
     elif cluster == 'subclass': search_param = 'nid'
-    
+
     if db._dbug: sys.stderr.write('Creating SQL query for {0.external} / {0.mode}\n'.format(ClusterInstances))
 
     db.select('cs.{0}, lc.chain'.format(search_param))
@@ -99,17 +162,17 @@ def get_instances_for(db, cluster, external, mode):
         db.join('chain2uniprot c2u',    'c2u.chain=lc.chain AND lc.start>=c2u.start AND lc.end<=c2u.end')
         db.join('drugBank_target ext',  'ext.uniprot = c2u.uniprot'         )
     elif external.lower() == 'scop':
-        unit = 'ext.family'    
+        unit = 'ext.family'
         db.join('chain2scop c2u',       'c2u.chain=lc.chain AND lc.start>=c2u.start AND lc.end<=c2u.end')
         db.join('scop ext',             'c2u.domain = ext.domain'           )
-    if taxID is not None: 
+    if taxID is not None:
         if external.lower() in ['enzyme', 'go', 'drugbank']:
             db.join('uniprot2taxid u2t', 'u2t.uniprot = c2u.uniprot AND u2t.taxid = {0}'.format(taxID))
         elif external.lower() == 'scop':
             db.join('chain2uniprot n2u', 'n2u.chain   = lc.chain AND lc.start>=n2u.start AND lc.end<=n2u.end')
             db.join('uniprot2taxid u2t', 'u2t.uniprot = n2u.uniprot AND u2t.taxid = {0}'.format(taxID))
         db.where_in('lc.assignation',   ['D','H']                           )
-    else:                  
+    else:
         db.where('lc.assignation',      'D'                                 )
     if taxID is not None:
         db.group_by('cs.{0}, lc.loop_id, {1}'.format(search_param, unit))
@@ -129,6 +192,20 @@ def get_instances_for(db, cluster, external, mode):
             result.setdefault(line[0],{'n':line[3],'k':[]})
             result[line[0]]['k'].append(tuple([line[1],int(line[2])]))
     return result
+
+
+def enzyme_parent(ec):
+    ec = ec.split('.')
+    if ec[1]   == '-':
+        return None
+    if ec[2]   == '-':
+        ec[1] = '-'
+    elif ec[3] == '-':
+        ec[2] = '-'
+    else:
+        ec[3] = '-'
+    return '.'.join(ec)
+
 
 class ClusterInstances(object):
     external = ''
@@ -151,19 +228,11 @@ class ClusterInstances(object):
 
     def _process_enzyme(self):
         new_instances         = set()
-        
-        def enzyme_parent(ec):
-            ec = ec.split('.')
-            if ec[1]   == '-': return None
-            if ec[2]   == '-': ec[1] = '-'
-            elif ec[3] == '-': ec[2] = '-'
-            else:              ec[3] = '-'
-            return '.'.join(ec)
 
         i = 0
         for instance in self.list_instances:
             ext, prt = instance[0], instance[1]
-            if self.debug: 
+            if self.debug:
                 if i%100 == 0:
                     sys.stderr.write('\tProcessed Rows: {0}\n'.format(i))
                 i += 1
