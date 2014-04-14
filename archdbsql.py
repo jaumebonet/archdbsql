@@ -36,12 +36,17 @@ class ArchDBsql(object):
         return self._methods[method_name]
 
     # CLUSTER RELATED FUNCTIONS
-    def get_subclass_from_geometries(self, methodID, ctrtype, length, distance,
-                                     theta, rho, delta):
-        return cluster.get_subclass_from_geometries_range(self._db, methodID,
-                                                          ctrtype, length,
-                                                          distance, theta,
-                                                          rho, delta)
+    def get_subclass_from_geometries(
+            self, methodID, ctrtype, length, distance, theta, rho, delta):
+        return cluster.get_subclass_from_geometries_range(
+            self._db, methodID, ctrtype, length, distance, theta, rho, delta)
+
+    def get_subclass_from_geometries_range(
+            self, methodID, ctrtype, length, distance, theta, rho, delta,
+            length_range, dist_range, theta_range, rho_range, delta_range):
+        return cluster.get_subclass_from_geometries_range(
+            self._db, methodID, ctrtype, length, distance, theta, rho, delta,
+            length_range, dist_range, theta_range, rho_range, delta_range)
 
     def get_subclass_contacts(self, subclass_nid, contact_types):
         self._check_contac_types(contact_types)
@@ -63,6 +68,11 @@ class ArchDBsql(object):
         self._check_external_relations(external)
         self._check_cluster_types(cluster)
         return enrichment.get_enrichment(self._db, cluster, external, nid)
+
+    def get_enrichment_representative(self, cluster_nid,
+                                      external, external_id):
+        return enrichment.get_enrichment_representative(self._db, cluster_nid,
+                                                        external, external_id)
 
     # ENRICHMENT ANALYSIS RELATED FUNCTIONS
     def get_all_instances_of(self, external, mode):

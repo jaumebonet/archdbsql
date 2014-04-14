@@ -1,11 +1,43 @@
 import sys
 from . import cluster as klstr
 
+
 def tofloat(value):
     try:
         return float(value)
     except:
         return 1
+
+
+def get_enrichment_representative(db, cluster_nid, external, external_id):
+    db.select('ld.loop_id, ld.sequence, ld.ss')
+    db.table('loop_description ld')
+    db.join('loop2cluster lc', 'lc.loop_nid=ld.nid')
+    db.join('loop2chain l2c', 'l2c.loop_id=ld.nid AND l2c.assignation="D"')
+    db.join('chain2uniprot c2u', 'c2u.chain=l2c.chain ' +
+            'AND l2c.start>=c2u.start AND l2c.end<=c2u.end')
+    if external.lower() == 'enzyme':
+        db.join('uniprot2enzyme u2e', 'u2e.uniprot=c2u.uniprot')
+        db.like('u2e.enzyme', external_id.split('.')[0], 'after')
+    elif external.lower() == 'go':
+        db.join('uniprot2GO u2g', 'u2g.uniprot=c2u.uniprot')
+        db.join('GO g', 'u2g.GO=g.nid')
+        db.where('g.id', external_id)
+    elif external.lower() == 'drugbank':
+        pass  # TODO
+    elif external.lower() == 'scop':
+        pass  # TODO
+    db.where('lc.cluster_nid', cluster_nid)
+    db.order_by('lc.clust_order')
+    db.get()
+
+    data = {}
+    for row in db.result():
+        data.setdefault('loop', row[0])
+        data.setdefault('sequence', row[1])
+        data.setdefault('structure', row[2])
+    return data
+
 
 def get_enrichment(db, cluster, external, nid):
     s = ','.join(['enrichment_pvalue', 'frequency', 'logodd',
@@ -52,13 +84,19 @@ def get_enrichment(db, cluster, external, nid):
     if external.lower() == 'enzyme':
         for k, v in r.iteritems():
             if v['info'] == 2:
-                v['name'] = r[enzyme_parent(k)]['name'] + ' ' + v['name']
+                parent = enzyme_parent(k)
+                if parent in r:
+                    v['name'] = r[parent]['name'] + ' ' + v['name']
         for k, v in r.iteritems():
             if v['info'] == 3:
-                v['name'] = r[enzyme_parent(k)]['name'] + ' ' + v['name']
+                parent = enzyme_parent(k)
+                if parent in r:
+                    v['name'] = r[parent]['name'] + ' ' + v['name']
         for k, v in r.iteritems():
             if v['info'] == 4:
-                v['name'] = r[enzyme_parent(k)]['name'] + ' ' + v['name']
+                parent = enzyme_parent(k)
+                if parent in r:
+                    v['name'] = r[parent]['name'] + ' ' + v['name']
     data = []
     for k, v in r.iteritems():
         data.append(v)
