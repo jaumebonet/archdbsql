@@ -9,11 +9,11 @@ def tofloat(value):
         return 1
 
 
-def get_enrichment_representative(db, cluster_nid, external, external_id):
+def get_enrichment_representative(db, cluster_nid, external, external_id, assignation='D'):
     db.select('ld.loop_id, ld.sequence, ld.ss')
     db.table('loop_description ld')
     db.join('loop2cluster lc', 'lc.loop_nid=ld.nid')
-    db.join('loop2chain l2c', 'l2c.loop_id=ld.nid AND (l2c.assignation="D" OR l2c.assignation="H")')
+    db.join('loop2chain l2c', 'l2c.loop_id=ld.nid AND l2c.assignation="{0}"'.format(assignation))
     db.join('chain2uniprot c2u', 'c2u.chain=l2c.chain ' +
             'AND l2c.start>=c2u.start AND l2c.end<=c2u.end')
     if external.lower() == 'enzyme':
@@ -29,6 +29,7 @@ def get_enrichment_representative(db, cluster_nid, external, external_id):
         pass  # TODO
     db.where('lc.cluster_nid', cluster_nid)
     db.order_by('lc.clust_order')
+    db.limit(1)
     db.get()
 
     data = {'loop': '', 'sequence': '', 'structure': ''}
@@ -36,7 +37,11 @@ def get_enrichment_representative(db, cluster_nid, external, external_id):
         data['loop']      = row[0]
         data['sequence']  = row[1]
         data['structure'] = row[2]
-    return data
+
+    if assignation == 'D' and len(data['sequence']) == 0:
+        return get_enrichment_representative(db, cluster_nid, external, external_id, 'H')
+    else:
+        return data
 
 
 def get_enrichment(db, cluster, external, nid):
