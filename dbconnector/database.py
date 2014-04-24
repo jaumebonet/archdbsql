@@ -2267,8 +2267,7 @@ class Database:
         else:
             offset += ", "
 
-        return sql+"LIMIT "+offset+limit
-
+        return sql+"LIMIT "+offset+str(limit)
 
     # --------------------------------------------------------------------
 
