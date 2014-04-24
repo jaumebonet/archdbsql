@@ -13,7 +13,7 @@ def get_enrichment_representative(db, cluster_nid, external, external_id):
     db.select('ld.loop_id, ld.sequence, ld.ss')
     db.table('loop_description ld')
     db.join('loop2cluster lc', 'lc.loop_nid=ld.nid')
-    db.join('loop2chain l2c', 'l2c.loop_id=ld.nid')
+    db.join('loop2chain l2c', 'l2c.loop_id=ld.nid AND (l2c.assignation="D" OR l2c.assignation="H")')
     db.join('chain2uniprot c2u', 'c2u.chain=l2c.chain ' +
             'AND l2c.start>=c2u.start AND l2c.end<=c2u.end')
     if external.lower() == 'enzyme':
@@ -31,11 +31,11 @@ def get_enrichment_representative(db, cluster_nid, external, external_id):
     db.order_by('lc.clust_order')
     db.get()
 
-    data = {}
+    data = {'loop': '', 'sequence': '', 'structure': ''}
     for row in db.result():
-        data.setdefault('loop', row[0])
-        data.setdefault('sequence', row[1])
-        data.setdefault('structure', row[2])
+        data['loop']      = row[0]
+        data['sequence']  = row[1]
+        data['structure'] = row[2]
     return data
 
 
