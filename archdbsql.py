@@ -53,6 +53,14 @@ class ArchDBsql(object):
         return cluster.get_subclass_contacts(self._db, subclass_nid,
                                              contact_types)
 
+    def get_similar_subclasses_to(self, subclass_nid, method_name,
+                                  length_range, dist_range, theta_range,
+                                  rho_range, delta_range):
+        methodID = self.get_method_nid(method_name)
+        return cluster.get_similar_subclasses_to(self._db, subclass_nid, methodID,
+                                                 length_range, dist_range, theta_range,
+                                                 rho_range, delta_range)
+
     # LOOP RELATED FUNCTIONS
     def get_loop_count(self):
         return loop.count_loops(self._db)
@@ -62,6 +70,13 @@ class ArchDBsql(object):
 
     def get_loop_specie_count(self, taxID):
         return loop.count_loops_assigned_to_species(self._db, taxID)
+
+    def get_loops_for_protein(self, proteinID, method_name = None):
+        if method_name is None:
+            methodID = None
+        else:
+            methodID = self.get_method_nid(method_name)
+        return loop.get_loops_for_protein(self._db, proteinID, methodID)
 
     # ENRICHMENT FUNCTIONS
     def get_enrichment(self, cluster, external, nid):

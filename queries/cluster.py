@@ -25,7 +25,7 @@ def get_subclass_from_geometries_range(db, methodID, ctrtype, length,
                                        delta_range=0):
     results = []
 
-    if isinstance(method, int):
+    if isinstance(methodID, int):
         method_nid  = methodID
         method_name = method.get_method_name(db, methodID)
     else:
@@ -66,6 +66,26 @@ def get_subclass_from_geometries_range(db, methodID, ctrtype, length,
                     results.append(tuple(row[:2]))
 
     return results
+
+
+def get_similar_subclasses_to(db, subclass_nid, methodID, length_range,
+                              dist_range, theta_range, rho_range, delta_range):
+
+    db.select('dist_range_min, dist_range_max, delta_range_min, delta_range_max')
+    db.select('rho_range_min, rho_range_max, theta_range_min, theta_range_max')
+    db.select('type, length')
+    db.table('cluster_subclass')
+    db.join('cluster_class', 'cluster_subclass.class_nid = cluster_class.nid')
+    db.where('cluster_subclass.nid', subclass_nid)
+    db.get()
+    result = db.result()[0]
+    return get_subclass_from_geometries_range(db, methodID, result[8], result[9],
+                                              result[0]+result[1]/float(2),
+                                              result[6]+result[7]/float(2),
+                                              result[4]+result[5]/float(2),
+                                              result[2]+result[3]/float(2),
+                                              length_range, dist_range,
+                                              theta_range, rho_range, delta_range)
 
 
 def get_subclass_contacts(db, nid, contact_type):
