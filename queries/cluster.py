@@ -18,7 +18,7 @@ def get_cluster_size(db, cluster, nid=None):
     return dict(db.result())
 
 
-def get_subclass_from_geometries_range(db, methodID, ctrtype, length,
+def get_subclass_from_geometries_range(db, methodID, ctrtype, ctrlength,
                                        distance, theta, rho, delta,
                                        length_range=0, dist_range=0,
                                        theta_range=0, rho_range=0,
@@ -53,9 +53,11 @@ def get_subclass_from_geometries_range(db, methodID, ctrtype, length,
     db.get()
     for row in db.result():
         search_length = re.search('(\d+)\w*', row[2])
+        query_length  = re.search('(\d+)\w*', str(ctrlength))
+        ctrlength     = int(query_length.group(1))
         minlrange = int(search_length.group(1)) - length_range
         maxlrange = int(search_length.group(1)) + length_range
-        if int(length) >= minlrange and int(length) <= maxlrange:
+        if int(ctrlength) >= minlrange and int(ctrlength) <= maxlrange:
             minrho = float(row[3]) - rho_range
             maxrho = float(row[4]) + rho_range
             if float(row[4]) - float(row[3]) > 100:
