@@ -54,3 +54,11 @@ def get_loops_for_protein(db, proteinID, methodID):
 
     db.get()
     return db.result()
+
+
+def get_info_loop(db, query, loop_id):
+    db.select(query)
+    db.table('loop_description')
+    db.where('loop_id', loop_id)
+    db.get()
+    return db.row()

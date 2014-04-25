@@ -78,6 +78,9 @@ class ArchDBsql(object):
             methodID = self.get_method_nid(method_name)
         return loop.get_loops_for_protein(self._db, proteinID, methodID)
 
+    def get_info_loop(self, query, loop_id):
+        return loop.get_info_loop(self._db, query, loop_id)
+
     # ENRICHMENT FUNCTIONS
     def get_enrichment(self, cluster, external, nid):
         self._check_external_relations(external)
