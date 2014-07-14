@@ -2,19 +2,23 @@ from .dbconnector.database  import Database
 from .queries               import method
 from .queries               import cluster
 from .queries               import loop
+from .queries               import chain
 from .queries               import enrichment
 from .queries               import taxid
+from .queries               import assignations
 
 
 class ArchDBsql(object):
 
-    external_relations = ['enzyme', 'GO', 'drugBank', 'SCOP']
+    external_relations = ['enzyme', 'GO', 'drugBank', 'SCOP', 'GO:M']
     cluster_types      = ['class', 'subclass']
     contact_types      = ['sites', 'ligands']
 
     def __init__(self, dbhost=None, dbuser=None,
                  dbpass=None, dbname=None, dbug=False):
 
+        if dbpass == 'None':
+            dbpass = None
         self._db  = Database(dbhost=dbhost, dbuser=dbuser,
                              dbpass=dbpass, dbname=dbname, dbug=dbug)
 
@@ -36,6 +40,9 @@ class ArchDBsql(object):
         return self._methods[method_name]
 
     # CLUSTER RELATED FUNCTIONS
+    def list_subclasses(self):
+        return cluster.list_all(self._db)
+
     def get_subclass_from_geometries(
             self, methodID, ctrtype, length, distance, theta, rho, delta):
         return cluster.get_subclass_from_geometries_range(
@@ -81,6 +88,13 @@ class ArchDBsql(object):
     def get_info_loop(self, query, loop_id):
         return loop.get_info_loop(self._db, query, loop_id)
 
+    # CHAIN FUNCTIONS
+    def list_source_chains(self):
+        return chain.list_chains_with_loop_assigned(self._db)
+
+    def list_source_and_identical_chains(self):
+        return chain.list_chains_with_loop_assigned(self._db, ['D', 'I'])
+
     # ENRICHMENT FUNCTIONS
     def get_enrichment(self, cluster, external, nid):
         self._check_external_relations(external)
@@ -113,6 +127,11 @@ class ArchDBsql(object):
         if data is None or data[3] != 'species':
             return False
         return True
+
+    # GENERAL RELATIONS
+    def get_uniprot_assignations(self, external):
+        self._check_external_relations(external)
+        return assignations.uniprot2(self._db, external)
 
     # CHECKERS
     def _check_external_relations(self, relation):

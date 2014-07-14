@@ -3,6 +3,16 @@ import re
 import method
 
 
+def list_all(db):
+    db.select('cs.nid, cs.name, m.name')
+    db.table('cluster_subclass cs')
+    db.join('cluster_class cc', 'cc.nid=cs.class_nid')
+    db.join('method m', 'cc.method=m.nid')
+    db.get()
+
+    return db.result()
+
+
 def get_cluster_size(db, cluster, nid=None):
     db.select('nid, size')
     if cluster.lower() == 'class':

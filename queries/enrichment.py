@@ -298,6 +298,10 @@ class ClusterInstances(object):
             self.list_instances.append(tuple([instance[2], instance[-1]]))
             self.list_instances.append(tuple([instance[3], instance[-1]]))
 
+    def process(self):
+        if self.external == 'enzyme':
+            self._process_enzyme()
+
     def _process_enzyme(self):
         new_instances         = set()
 
