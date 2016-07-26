@@ -1532,6 +1532,8 @@ class Database:
             self.limit(limit, offset)
 
         sql = self._compile_select()
+        if self._dbug:
+            print sql
 
         self.query(sql)
 

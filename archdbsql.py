@@ -34,7 +34,7 @@ class ArchDBsql(object):
 
     # METHOD RELATED FUNCTIONS
     def get_method_nid(self, method_name):
-        if not method_name in self._methods:
+        if method_name not in self._methods:
             m = method.get_method_nid(self._db, method_name)
             self._methods[method_name] = m
         return self._methods[method_name]

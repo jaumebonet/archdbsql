@@ -52,14 +52,14 @@ def get_subclass_from_geometries_range(db, methodID, ctrtype, ctrlength,
     db.where('cc.method', method_nid)
     db.where('cc.type',   ctrtype)
     mdist, Mdist = 'cs.dist_range_min', 'cs.dist_range_max'
-    db.where('{1} - {0} <='.format(dist_range, mdist),   str(distance))
-    db.where('{1} + {0} >='.format(dist_range, Mdist),   str(distance))
+    db.where('{1} - \'{0}\' <='.format(dist_range, mdist),   str(distance))
+    db.where('{1} + \'{0}\' >='.format(dist_range, Mdist),   str(distance))
     mtheta, Mtheta = 'cs.theta_range_min', 'cs.theta_range_max'
-    db.where('{1} - {0} <='.format(theta_range, mtheta), str(theta))
-    db.where('{1} + {0} >='.format(theta_range, Mtheta), str(theta))
+    db.where('{1} - \'{0}\' <='.format(theta_range, mtheta), str(theta))
+    db.where('{1} + \'{0}\' >='.format(theta_range, Mtheta), str(theta))
     mdelta, Mdelta = 'cs.delta_range_min', 'cs.delta_range_max'
-    db.where('{1} - {0} <='.format(delta_range, mdelta), str(delta))
-    db.where('{1} + {0} >='.format(delta_range, Mdelta), str(delta))
+    db.where('{1} - \'{0}\' <='.format(delta_range, mdelta), str(delta))
+    db.where('{1} + \'{0}\' >='.format(delta_range, Mdelta), str(delta))
     db.get()
     for row in db.result():
         search_length = re.search('(\d+)\w*', row[2])
