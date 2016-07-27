@@ -68,6 +68,9 @@ class ArchDBsql(object):
                                                  length_range, dist_range, theta_range,
                                                  rho_range, delta_range)
 
+    def get_subclass_representative(self, subclass_nid):
+        return cluster.get_subclass_representative(self._db, subclass_nid)
+
     # LOOP RELATED FUNCTIONS
     def get_loop_count(self):
         return loop.count_loops(self._db)
@@ -137,17 +140,17 @@ class ArchDBsql(object):
     def _check_external_relations(self, relation):
         msg = 'External relation options are {0}\n'
         msg = msg.format(repr(self.external_relations))
-        if not relation in self.external_relations:
+        if relation not in self.external_relations:
             raise AttributeError(msg)
 
     def _check_cluster_types(self, ctype):
         msg = 'Cluster options are {0}\n'
         msg = msg.format(repr(self.cluster_types))
-        if not ctype in self.cluster_types:
+        if ctype not in self.cluster_types:
             raise AttributeError(msg)
 
     def _check_contac_types(self, ctype):
         msg = 'Contact options are {0}\n'
         msg = msg.format(repr(self.contact_types))
-        if not ctype in self.contact_types:
+        if ctype not in self.contact_types:
             raise AttributeError(msg)

@@ -92,10 +92,10 @@ def get_similar_subclasses_to(db, subclass_nid, methodID, length_range,
     db.get()
     result = db.result()[0]
     return get_subclass_from_geometries_range(db, methodID, result[8], result[9],
-                                              result[0]+result[1]/float(2),
-                                              result[6]+result[7]/float(2),
-                                              result[4]+result[5]/float(2),
-                                              result[2]+result[3]/float(2),
+                                              result[0] + result[1] / float(2),
+                                              result[6] + result[7] / float(2),
+                                              result[4] + result[5] / float(2),
+                                              result[2] + result[3] / float(2),
                                               length_range, dist_range,
                                               theta_range, rho_range, delta_range)
 
@@ -105,6 +105,18 @@ def get_subclass_contacts(db, nid, contact_type):
         return get_subclass_sites(db, nid)
     if contact_type == 'ligands':
         return get_subclass_ligands(db, nid)
+
+def get_subclass_representative(db, nid):
+    db.select('ld.*')
+    db.table('loop_description ld')
+    db.join('loop2cluster lc', 'ld.nid=lc.loop_nid')
+    db.where('lc.cluster_nid', nid)
+    db.where('lc.clust_order', 1)
+    db.get()
+    r = db.result()[0]
+    data = {'id': str(r[1]), 'length': r[3], 'ss1L': r[4], 'ss2L': r[6],
+            'distance': r[8], 'theta': r[9], 'rho': r[10], 'delta': r[11]}
+    return data
 
 
 def get_subclass_sites(db, nid):
