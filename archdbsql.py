@@ -43,6 +43,9 @@ class ArchDBsql(object):
     def list_subclasses(self):
         return cluster.list_all(self._db)
 
+    def get_subclass_size(self, subclass_nid ):
+        return cluster.get_cluster_size( "subclass", subclass_nid )
+
     def get_subclass_from_geometries(
             self, methodID, ctrtype, length, distance, theta, rho, delta):
         return cluster.get_subclass_from_geometries_range(
