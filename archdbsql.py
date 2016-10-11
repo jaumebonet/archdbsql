@@ -71,6 +71,9 @@ class ArchDBsql(object):
                                                  length_range, dist_range, theta_range,
                                                  rho_range, delta_range)
 
+    def get_subclass_loops(self, subclass_nid):
+        return cluster.get_subclass_loops(self._db, subclass_nid)
+
     def get_subclass_representative(self, subclass_nid):
         return cluster.get_subclass_representative(self._db, subclass_nid)
 
