@@ -24,7 +24,8 @@ def count_loops_assigned_to_species(db, taxID):
             selector = "u2t.taxid = {0}".format(taxID)
         elif isinstance(taxID, list):
             selector = "u2t.taxid IN {0}".format(taxID)
-        db.join('uniprot2taxid u2t',  'u2t.uniprot = c2u.uniprot AND {0}'.format(selector))
+        db.join('uniprot2taxid u2t',
+                'u2t.uniprot = c2u.uniprot AND {0}'.format(selector))
     db.where('lc.assignation',    'D')
     db.or_where('lc.assignation', 'H')
     db.group_by('loop_id')
@@ -49,9 +50,9 @@ def get_loops_for_protein(db, proteinID, methodID):
         # db.join('method m', 'm.nid=cc.method', 'left')
         db.where('cc.method', methodID)
         db.group_by('ld.loop_id')
+    db.select('ld.ss, ld.sequence')
     db.where('c.pdb', p[0])
     db.where('c.chain', p[1])
-
     db.get()
     return db.result()
 

@@ -1,14 +1,30 @@
-from .dbconnector.database  import Database
-from .queries               import method
-from .queries               import cluster
-from .queries               import loop
-from .queries               import chain
-from .queries               import enrichment
-from .queries               import taxid
-from .queries               import assignations
+from .dbconnector.database import Database
+from .queries import method
+from .queries import cluster
+from .queries import loop
+from .queries import chain
+from .queries import enrichment
+from .queries import taxid
+from .queries import assignations
 
 
 class ArchDBsql(object):
+    """Main object to query ArchDB14.
+
+    It gets the user, host, password and database and keeps the connection open
+    while performing queries by declaring a connection such as::
+
+        import os
+        from archdbsql import ArchDBsql
+
+        dbcon = ArchDBsql(dbhost=os.getenv('SQLHOSTNAME'),
+                  dbuser=os.getenv('ARCHDBUSER'),
+                  dbpass=os.getenv('ARCHDBPASS'),
+                  dbname=os.getenv('ARCHDBNAAME'),
+                  dbug=False)
+
+    All queries will be methods attached to this object.
+    """
 
     external_relations = ['enzyme', 'GO', 'drugBank', 'SCOP', 'GO:M']
     cluster_types      = ['class', 'subclass']
@@ -34,6 +50,13 @@ class ArchDBsql(object):
 
     # METHOD RELATED FUNCTIONS
     def get_method_nid(self, method_name):
+        """Provide the clustering method identifier in the database.
+
+        :param str method_name: Method name to query. Normally this should
+            be either ``DS`` or ``MCL``.
+
+        :return: :class:`int`
+        """
         if method_name not in self._methods:
             m = method.get_method_nid(self._db, method_name)
             self._methods[method_name] = m
@@ -87,7 +110,7 @@ class ArchDBsql(object):
     def get_loop_specie_count(self, taxID):
         return loop.count_loops_assigned_to_species(self._db, taxID)
 
-    def get_loops_for_protein(self, proteinID, method_name = None):
+    def get_loops_for_protein(self, proteinID, method_name=None):
         if method_name is None:
             methodID = None
         else:

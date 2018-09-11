@@ -106,6 +106,7 @@ def get_subclass_contacts(db, nid, contact_type):
     if contact_type == 'ligands':
         return get_subclass_ligands(db, nid)
 
+
 def get_subclass_loops(db, nid):
     db.select('ld.*')
     db.table('loop_description ld')
@@ -113,6 +114,7 @@ def get_subclass_loops(db, nid):
     db.where('lc.cluster_nid', nid)
     db.get()
     return db.result()
+
 
 def get_subclass_representative(db, nid):
     r = get_subclass_loops(db, nid)[0]
