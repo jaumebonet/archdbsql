@@ -29,24 +29,17 @@ setup(
         #   4 - Beta
         #   5 - Production/Stable
         'Development Status :: 3 - Alpha',
-        'Intended Audience :: Developers',
         'Intended Audience :: Science/Research',
         'Environment :: Console',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
         'Operating System :: MacOS',
         'Operating System :: Unix',
         'Topic :: Scientific/Engineering :: Bio-Informatics',
-        'Topic :: Scientific/Engineering :: Visualization',
     ],
 
     project_urls={
-        'Documentation': 'http://jaumebonet.cat/archdbsql',
         'Source': 'https://github.com/jaumebonet/archdbsql',
         'Tracker': 'https://github.com/jaumebonet/archdbsql/issues',
     },
@@ -54,7 +47,13 @@ setup(
     platforms='UNIX',
     keywords='development',
 
-    install_requires=['mysql-connector'],
+    install_requires=[x.strip() for x in open('REQUIREMENTS').readlines()],
 
     packages=find_packages(exclude=['docs', 'demo', 'sphinx-docs']),
+    include_package_data=True,
+    package_data={
+        'archdbsql': ['REQUIREMENTS'],
+    },
+
+    zip_safe=False,
 )
